@@ -473,7 +473,7 @@
   .hearts{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
   .heart{ font-size:1.25rem; filter: drop-shadow(0 8px 10px rgba(0,0,0,.35)); }
 
-  /* ===== Games Hub + Memory + Tree styles ===== */
+  /* Games Hub + Memory + Tree styles */
   #gamesHubBackdrop .btnBig{ margin-top:8px; }
   .mmGrid{
     display:grid;
@@ -605,7 +605,6 @@
     filter: drop-shadow(0 12px 14px rgba(0,0,0,.35));
   }
 
-  /* Debug line for canvas size */
   .dbg { display:none; margin-top:10px; font-size:.8rem; opacity:.8; }
   .dbg.on { display:block; }
 </style>
@@ -1060,25 +1059,7 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
-  // Safe rounded-rect helper (no reliance on CanvasRenderingContext2D existing)
-  function drawRoundedRect(ctx, x, y, w, h, r) {
-    if (!ctx) return;
-    if (typeof ctx.roundRect === "function") {
-      ctx.beginPath();
-      ctx.roundRect(x, y, w, h, r);
-      return;
-    }
-    const rr = Math.min(r, w / 2, h / 2);
-    ctx.beginPath();
-    ctx.moveTo(x + rr, y);
-    ctx.arcTo(x + w, y,     x + w, y + h, rr);
-    ctx.arcTo(x + w, y + h, x,     y + h, rr);
-    ctx.arcTo(x,     y + h, x,     y,     rr);
-    ctx.arcTo(x,     y,     x + w, y,     rr);
-    ctx.closePath();
-  }
-
-  // ===== On-screen error console (HTML Viewer Q) =====
+  // error console
   (function(){
     const box = document.createElement("div");
     box.id = "errBox";
@@ -1101,7 +1082,7 @@
     window.addEventListener("unhandledrejection", (e)=> show((e.reason && e.reason.message) ? e.reason.message : e.reason));
   })();
 
-  // ===== Storage (safe fallback) =====
+  // storage
   let storageOK = true;
   const mem = {};
   try { localStorage.setItem("__t","1"); localStorage.removeItem("__t"); } catch { storageOK = false; }
@@ -1125,7 +1106,7 @@
     challengeKey: "elf_challenge_v4",
     stickersKey: "elf_stickers_v4",
 
-    dailyBestAll: "elf_dailybest_all_v4",  // unified daily best across ALL games
+    dailyBestAll: "elf_dailybest_all_v4",
     coins: "elf_coins_v4",
 
     mood: "elf_mood_v4",
@@ -1138,12 +1119,11 @@
     perf: "elf_perf_v4",
   };
 
-  // ===== Date helpers =====
   const pad2 = (n) => String(n).padStart(2,"0");
   const ymd = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
   const todayKey = () => ymd(new Date());
 
-  // ===== Audio (WebAudio; iPad friendly after first tap) =====
+  // audio
   let soundOn = get(KEYS.sound, "1") !== "0";
   let audioCtx = null;
   function ensureAudio(){
@@ -1176,7 +1156,6 @@
     set(KEYS.sound, soundOn ? "1" : "0");
   }
 
-  // ===== Modal/canvas reliability helpers (HTML Viewer Q iPad fix) =====
   function forceLayout(){ document.body.offsetHeight; }
   function afterOpen(backdropEl, fn){
     requestAnimationFrame(() => {
@@ -1203,7 +1182,6 @@
     return c;
   }
 
-  // ===== Countdown =====
   function nextXmas(d){
     const y = d.getFullYear();
     const x = new Date(y,11,25,0,0,0,0);
@@ -1222,7 +1200,6 @@
     $("countdown").textContent = `${days}d ${hrs}h ${mins}m ${secs}s`;
   }
 
-  // ===== Message scheduling =====
   function readMap(key){ try { return JSON.parse(get(key,"{}")) || {}; } catch { return {}; } }
   function writeMap(key, obj){ try { set(key, JSON.stringify(obj)); } catch {} }
   function getMessageForToday(){
@@ -1235,7 +1212,6 @@
   }
   function renderMessage(){ $("msg").textContent = getMessageForToday(); }
 
-  // ===== Daily seed (challenge/stickers/hearts) =====
   const CHALLENGES = [
     "Find 3 red things in the house 🎈","Do 10 star jumps ⭐","Draw a snowman and show it to a grown-up ⛄",
     "Say 3 kind things to someone 💛","Make your bed like a tidy elf 🛏️","Help with one small job (shoes, toys, table) 🧹",
@@ -1254,7 +1230,6 @@
       set(KEYS.hearts, JSON.stringify({ day:t, count:0 }));
       set(KEYS.wheelDay, t);
       set(KEYS.wheelDone, "0");
-      // daily best is keyed per day in map; no need to clear here
     }
   }
   function readChallenge(){ ensureDaily(); try { return JSON.parse(get(KEYS.challengeKey,"{}"))||{}; } catch { return {}; } }
@@ -1287,7 +1262,6 @@
     $("challengeDone").classList.toggle("on", !!c.done);
   }
 
-  // ===== Hearts =====
   function readHearts(){ ensureDaily(); try { return JSON.parse(get(KEYS.hearts,"{}"))||{day:todayKey(),count:0}; } catch { return {day:todayKey(),count:0}; } }
   function writeHearts(o){ set(KEYS.hearts, JSON.stringify(o)); }
   function renderHearts(){
@@ -1298,7 +1272,6 @@
     }
   }
 
-  // ===== Mood (daily) =====
   const MOODS = [
     {name:"Silly", emoji:"😜", accent:"rgba(255,149,90,.22)", hint:"Jingles & Bells might play a tiny prank today…"},
     {name:"Sneaky", emoji:"🕵️", accent:"rgba(74,166,255,.20)", hint:"Extra sneaky footsteps today!"},
@@ -1331,7 +1304,6 @@
     $("moodHint").textContent = m.hint;
   }
 
-  // ===== Coins (global) =====
   function getCoins(){ return Math.max(0, parseInt(get(KEYS.coins,"0"),10)||0); }
   function setCoins(v){ set(KEYS.coins, String(Math.max(0,v|0))); }
   function addCoins(n, reason="Coins!"){
@@ -1342,7 +1314,6 @@
     beep(980,55,"sine");
   }
 
-  // ===== Unified Daily Best across ALL games =====
   function readNumMap(key){ try { return JSON.parse(get(key,"{}")) || {}; } catch { return {}; } }
   function writeNumMap(key, obj){ try { set(key, JSON.stringify(obj)); } catch {} }
   function getDailyBestAll(){
@@ -1360,7 +1331,6 @@
     $("coinsMini").textContent = String(getCoins());
   }
 
-  // ===== Preferences =====
   function applyPrefs(){
     const hand = get(KEYS.hand,"0")==="1";
     const stampOn = get(KEYS.stamp,"1")!=="0";
@@ -1415,7 +1385,6 @@
     syncSoundButton();
   }
 
-  // ===== Popup helpers =====
   const openBackdrop = (el) => { el.classList.add("visible"); el.setAttribute("aria-hidden","false"); requestAnimationFrame(()=>forceLayout()); };
   const closeBackdrop = (el) => { el.classList.remove("visible"); el.setAttribute("aria-hidden","true"); };
   const backdropClickClose = (el) => el.addEventListener("click",(e)=>{ if(e.target===el) closeBackdrop(el); });
@@ -1437,7 +1406,6 @@
   [extrasBackdrop,wheelBackdrop,adventBackdrop,gameBackdrop,pinBackdrop,adminBackdrop,
    gamesHubBackdrop,presentBackdrop,memoryBackdrop,snowBackdrop,runnerBackdrop,treeBackdrop].forEach(backdropClickClose);
 
-  // ===== Wheel (1/day) =====
   const WHEEL = [
     {label:"🪙 +10 coins", apply:()=>addCoins(10,"Wheel win!") },
     {label:"⭐ +1 sticker", apply:()=>addSticker("Wheel win!") },
@@ -1459,17 +1427,16 @@
 
   let wheelRot = 0;
 
-  // ===== Advent (December only) =====
   const ADVENT_SURPRISES = [
     "Jingles fact: Reindeer can see UV light! 🦌",
     "Bells says: do 20 seconds of silly dancing 💃",
     "Bonus: 🪙 +5 coins!",
-    "Bonus: 🪙 +10 coins!",
     "Bonus: ⭐ +1 sticker!",
     "Draw a candy cane ✍️",
     "Tell someone one nice thing 💛",
     "Make a paper snowflake ✂️❄️",
     "Hide a tiny note for someone 📝",
+    "Bonus: 🪙 +10 coins!",
     "Bonus: ⭐ +2 stickers!",
   ];
   function readAdvent(){ try { return JSON.parse(get(KEYS.advent, '{"open":[]}')) || {open:[]}; } catch { return {open:[]}; } }
@@ -1525,7 +1492,6 @@
     $("adventOut").textContent = isDecemberNow() ? `Pick a door! (Today is ${today})` : "It’s not December yet — doors are locked 🎄";
   }
 
-  // ===== Fun buttons =====
   const JOKES = [
     "What do elves learn in school? The elf-abet! 🎓",
     "Why did the ornament go to school? To get a little brighter! ✨",
@@ -1547,7 +1513,6 @@
     "Jingles says: tip-toe like an elf for 10 steps! 🧝",
   ];
 
-  // ===== Hidden admin access =====
   if(!get(KEYS.pin,"")) set(KEYS.pin,"1234");
 
   let secretTaps = 0;
@@ -1590,7 +1555,6 @@
     }
   });
 
-  // ===== Admin timeout =====
   let adminTimeout = 0;
   function adminArmTimeout(){
     clearTimeout(adminTimeout);
@@ -1600,9 +1564,7 @@
   adminBackdrop.addEventListener("touchstart", adminArmTimeout, {passive:true});
   adminBackdrop.addEventListener("keydown", adminArmTimeout);
 
-  // ======================================================
-  // =============== Jumping Elf ==========================
-  // ======================================================
+  // ===== Jumping Elf game =====
   const canvas = $("game");
   let ctx = null;
 
@@ -1676,13 +1638,10 @@
     running = false;
     $("jumpBtn").disabled = true;
 
-    // tally up run coins to global coins
     if(coinsRun > 0) addCoins(coinsRun, "Jumping Elf coins collected!");
 
-    // unified daily best across all games
     setDailyBestAll(score);
 
-    // small milestones
     if(score >= 10) addCoins(5, "Jumping Elf reward!");
     if(score >= 20) addSticker("Jumping Elf achievement!");
 
@@ -1731,7 +1690,6 @@
     ctx.closePath();
   }
 
-  // Cute elf "sprite" drawn with canvas shapes (no external images needed)
   function drawElf(x,y,scale=1){
     ctx.save();
     ctx.translate(x,y);
@@ -1774,10 +1732,8 @@
     ctx.beginPath(); ctx.arc(23,20,6,0.15*Math.PI,0.85*Math.PI); ctx.stroke();
 
     ctx.fillStyle = "#0b2b2b";
-    drawRoundedRect(ctx, 8, 48, 14, 8, 4);
-    ctx.fill();
-    drawRoundedRect(ctx, 24, 48, 14, 8, 4);
-    ctx.fill();
+    roundRect(8,48,14,8,4); ctx.fill();
+    roundRect(24,48,14,8,4); ctx.fill();
 
     ctx.restore();
   }
@@ -1841,12 +1797,17 @@
     world.ground = H - 56;
     const speed = world.speed + Math.min(4, (level-1)*0.25);
 
+    // gravity + jump (FIXED landing condition)
     elf.jumpCooldown = Math.max(0, elf.jumpCooldown - 1);
     if(!elf.onGround){
       elf.vy += world.gravity;
       elf.y += elf.vy;
-      if(elf.y <= 0){
-        elf.y = 0; elf.vy = 0; elf.onGround = true;
+
+      // land when we come back DOWN to y >= 0
+      if(elf.y >= 0){
+        elf.y = 0;
+        elf.vy = 0;
+        elf.onGround = true;
       }
     }
 
@@ -1918,13 +1879,24 @@
     raf = requestAnimationFrame(loop);
   }
 
-  // ======================================================
-  // =============== 5 EXTRA GAMES =========================
-  // ======================================================
-
+  // ===== Extra games shared helpers =====
   const bestKey = (k)=>`elf_gamepack_best_${k}_v1`;
   const getBestX = (k)=>parseInt(get(bestKey(k),"0"),10)||0;
   const setBestX = (k,v)=>{ const cur=getBestX(k); if((v|0)>cur) set(bestKey(k), String(v|0)); };
+
+  if(!CanvasRenderingContext2D.prototype.roundRect){
+    CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+      const rr = Math.min(r, w/2, h/2);
+      this.beginPath();
+      this.moveTo(x+rr,y);
+      this.arcTo(x+w,y,x+w,y+h,rr);
+      this.arcTo(x+w,y+h,x,y+h,rr);
+      this.arcTo(x,y+h,x,y,rr);
+      this.arcTo(x,y,x+w,y,rr);
+      this.closePath();
+      return this;
+    };
+  }
 
   // ---------- Game 1: Present Catcher ----------
   const pcCanvas = $("pcCanvas");
@@ -1978,7 +1950,6 @@
     pcStop();
     setBestX("present", pc.score);
 
-    // Unified rewards
     setDailyBestAll(pc.score);
     if(pc.score >= 10) addCoins(5,"Present Catcher reward!");
     if(pc.score >= 20) addSticker("Present Catcher achievement!");
@@ -2046,7 +2017,8 @@
     for(const d of pc.drops) c.fillText(d.kind, d.x, d.y);
 
     c.fillStyle="rgba(255,255,255,.18)";
-    drawRoundedRect(c, basketX, basketY, pc.w, 18, 10);
+    c.beginPath();
+    c.roundRect(basketX, basketY, pc.w, 18, 10);
     c.fill();
 
     c.font="40px system-ui";
@@ -2130,11 +2102,9 @@
     if(improved) set(bestKey(key), label);
     mmBestLabel();
 
-    // Unified rewards
     const coinReward = mmHard ? 10 : 6;
     addCoins(coinReward, "Memory Match reward!");
     addSticker("Memory Match completed!");
-    // Convert to a score-like number for daily best competition
     const scoreLike = Math.max(0, 1000 - (mmMoves*10 + mmSecs));
     setDailyBestAll(scoreLike);
     refreshMini();
@@ -2266,7 +2236,6 @@
     spStop();
     setBestX("snow", sp.score);
 
-    // Unified rewards
     setDailyBestAll(sp.score);
     if(sp.score >= 12) addCoins(5,"Snowball Pop reward!");
     if(sp.score >= 25) addSticker("Snowball Pop achievement!");
@@ -2365,7 +2334,6 @@
     $("crSwitch").disabled = true;
     setBestX("runner", cr.score);
 
-    // Unified rewards
     setDailyBestAll(cr.score);
     if(cr.score >= 15) addCoins(5,"Candy Cane Runner reward!");
     if(cr.score >= 35) addSticker("Candy Cane Runner achievement!");
@@ -2534,7 +2502,6 @@
         dtStop();
         setBestX("tree", dtPlaced);
 
-        // Unified rewards
         setDailyBestAll(dtPlaced);
         if(dtPlaced >= 8) addCoins(5,"Tree decorating reward!");
         if(dtPlaced >= 14) addSticker("Tree decorating achievement!");
@@ -2562,7 +2529,6 @@
   closeStopper(runnerBackdrop, crStop);
   closeStopper(treeBackdrop, dtStop);
 
-  // ===== UI Wiring =====
   function initUI(){
     $("dateLabel").textContent = new Date().toLocaleDateString(undefined, { weekday:"long", year:"numeric", month:"long", day:"numeric" });
 
@@ -2716,7 +2682,6 @@
       beep(880,60,"sine");
     });
 
-    // Jumping Elf popup
     $("closeGame").addEventListener("click", ()=>{
       closeBackdrop(gameBackdrop);
       resetGame();
@@ -2740,7 +2705,6 @@
     canvas.addEventListener("click", jump);
     canvas.addEventListener("touchstart", (e)=>{ e.preventDefault(); jump(); }, {passive:false});
 
-    // Games Hub
     $("closeGamesHub").addEventListener("click", ()=>closeBackdrop(gamesHubBackdrop));
 
     $("openJumpingElfFromHub").addEventListener("click", ()=>{
@@ -2753,7 +2717,6 @@
       beep(740,45,"triangle");
     });
 
-    // Open other games
     $("openGame1").addEventListener("click", ()=>{
       closeBackdrop(gamesHubBackdrop);
       openBackdrop(presentBackdrop);
@@ -2784,7 +2747,6 @@
       afterOpen(treeBackdrop, ()=>{ dtResetBoard(); });
     });
 
-    // Game buttons inside modals
     $("pcStart").addEventListener("click", ()=>{ if(!pcRun) pcStart(); });
     $("spStart").addEventListener("click", ()=>{ if(!spRun) spStart(); });
     $("crStart").addEventListener("click", ()=>{ if(!crRun) crStart(); });
@@ -2801,14 +2763,12 @@
       mmNewGame();
     });
 
-    // Close buttons for other games
     $("closePresent").addEventListener("click", ()=>{ pcStop(); closeBackdrop(presentBackdrop); });
     $("closeMemory").addEventListener("click", ()=>{ mmStopTimer(); closeBackdrop(memoryBackdrop); });
     $("closeSnow").addEventListener("click", ()=>{ spStop(); closeBackdrop(snowBackdrop); });
     $("closeRunner").addEventListener("click", ()=>{ crStop(); closeBackdrop(runnerBackdrop); });
     $("closeTree").addEventListener("click", ()=>{ dtStop(); closeBackdrop(treeBackdrop); });
 
-    // PIN / admin
     $("pinClose").addEventListener("click", ()=>closeBackdrop(pinBackdrop));
     $("pinOk").addEventListener("click", ()=>{
       const entered = ($("pinInput").value || "").trim();
@@ -2939,7 +2899,6 @@
       if(storageOK){
         Object.values(KEYS).forEach(k=>localStorage.removeItem(k));
       }
-      // restore defaults
       set(KEYS.pin,"1234");
       set(KEYS.hand,"0"); set(KEYS.stamp,"1"); set(KEYS.twinkle,"1"); set(KEYS.snowOn,"1");
       set(KEYS.snowPct,"55"); set(KEYS.bigText,"0"); set(KEYS.access,"0"); set(KEYS.perf,"0");
@@ -2961,7 +2920,6 @@
     });
   }
 
-  // ===== FINAL INIT =====
   ensureDaily();
   renderMessage();
   renderMood();
@@ -2972,7 +2930,6 @@
   applyPrefs();
   initUI();
 
-  // initial states
   resetGame();
   dtResetBoard();
   mmNewGame();
