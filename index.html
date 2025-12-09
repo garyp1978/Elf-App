@@ -31,7 +31,7 @@
     background: radial-gradient(circle at top, var(--bg1) 0, var(--bg2) 55%, var(--bg3) 100%);
     display:flex; justify-content:center; align-items:center;
     padding:14px;
-    overflow-y:auto;        /* ✅ allow scrolling on smaller screens */
+    overflow-y:auto;        /* allow scrolling on smaller screens */
     overflow-x:hidden;
     -webkit-user-select:none; user-select:none;
   }
@@ -443,7 +443,7 @@
     width:0;height:0;
     border-left:16px solid transparent;
     border-right:16px solid transparent;
-    border-top:26px solid rgba(255,255,255,.9); /* ✅ arrow points DOWN toward wheel */
+    border-top:26px solid rgba(255,255,255,.9); /* arrow points DOWN toward wheel */
     filter: drop-shadow(0 10px 10px rgba(0,0,0,.45));
   }
 
@@ -475,7 +475,7 @@
   .hearts{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
   .heart{ font-size:1.25rem; filter: drop-shadow(0 8px 10px rgba(0,0,0,.35)); }
 
-  /* Games Hub + Memory + Tree styles ... (unchanged) */
+  /* Games Hub + Memory + Tree styles */
   #gamesHubBackdrop .btnBig{ margin-top:8px; }
   .mmGrid{
     display:grid;
@@ -624,7 +624,7 @@
 
     <div class="hdr">
       <div class="face" aria-hidden="true">
-        <!-- elf face svg unchanged -->
+        <!-- elf face svg -->
         <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="hat" x1="0" y1="0" x2="1" y2="1">
@@ -985,7 +985,7 @@
       <div class="dtOrnaments" id="dtOrnaments" aria-label="Ornaments tray"></div>
     </div>
 
-    <div class="status" id="dtStatus">Drag ornaments onto the tree (or tap an ornament) before time runs out!</div>
+    <div class="status" id="dtStatus">Tap an ornament to place it on the tree before time runs out!</div>
   </div>
 </div>
 
@@ -1082,6 +1082,8 @@
   try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); }catch{ storageOK=false; }
   const get=(k,fb)=>{ try{ return storageOK?(localStorage.getItem(k)??fb):(mem[k]??fb);}catch{return fb;}};
   const set=(k,v)=>{ try{ storageOK?localStorage.setItem(k,v):mem[k]=String(v);}catch{} };
+  const getInt=(k,fb)=>{ const v=parseInt(get(k,""),10); return Number.isFinite(v)?v:fb; };
+  const setInt=(k,v)=>set(k,String(v|0));
 
   const KEYS = {
     pin: "elf_pin_v4",
@@ -1111,6 +1113,12 @@
     advent: "elf_advent_open_v4",
 
     perf: "elf_perf_v4",
+
+    pcBest: "elf_pc_best_v1",
+    spBest: "elf_sp_best_v1",
+    crBest: "elf_cr_best_v1",
+    dtBest: "elf_dt_best_v1",
+    mmBest: "elf_mm_best_v1"
   };
 
   const pad2 = n=>String(n).padStart(2,"0");
@@ -1201,7 +1209,18 @@
   function renderMessage(){ $("msg").textContent=getMessageForToday(); }
 
   // Daily seed, challenges, stickers, hearts, moods etc
-  const CHALLENGES=[/* unchanged */"Find 3 red things in the house 🎈","Do 10 star jumps ⭐","Draw a snowman and show it to a grown-up ⛄","Say 3 kind things to someone 💛","Make your bed like a tidy elf 🛏️","Help with one small job (shoes, toys, table) 🧹","Sing a Christmas song (even a silly one!) 🎶","Write a thank-you note (or draw one) ✍️","Read a story with someone 📚","Make a reindeer face in the mirror 🦌"];
+  const CHALLENGES=[
+    "Find 3 red things in the house 🎈",
+    "Do 10 star jumps ⭐",
+    "Draw a snowman and show it to a grown-up ⛄",
+    "Say 3 kind things to someone 💛",
+    "Make your bed like a tidy elf 🛏️",
+    "Help with one small job (shoes, toys, table) 🧹",
+    "Sing a Christmas song (even a silly one!) 🎶",
+    "Write a thank-you note (or draw one) ✍️",
+    "Read a story with someone 📚",
+    "Make a reindeer face in the mirror 🦌"
+  ];
   const STICKERS=["⭐","🎁","🍬","🦌","🎄","❄️","✨","🏅","🧸","🎅","🪙","💗"];
 
   function ensureDaily(){
@@ -1256,11 +1275,13 @@
     }
   }
 
-  const MOODS=[{name:"Silly",emoji:"😜",accent:"rgba(255,149,90,.22)",hint:"Jingles & Bells might play a tiny prank today…"},
-               {name:"Sneaky",emoji:"🕵️",accent:"rgba(74,166,255,.20)",hint:"Extra sneaky footsteps today!"},
-               {name:"Happy",emoji:"😊",accent:"rgba(34,179,109,.20)",hint:"Super cheerful — kindness time!"},
-               {name:"Sleepy",emoji:"😴",accent:"rgba(168,122,255,.20)",hint:"Sleepy vibes — whisper voices help!"},
-               {name:"Sparkly",emoji:"✨",accent:"rgba(255,217,114,.22)",hint:"Sparkly day — try something creative!"}];
+  const MOODS=[
+    {name:"Silly",emoji:"😜",accent:"rgba(255,149,90,.22)",hint:"Jingles & Bells might play a tiny prank today…"},
+    {name:"Sneaky",emoji:"🕵️",accent:"rgba(74,166,255,.20)",hint:"Extra sneaky footsteps today!"},
+    {name:"Happy",emoji:"😊",accent:"rgba(34,179,109,.20)",hint:"Super cheerful — kindness time!"},
+    {name:"Sleepy",emoji:"😴",accent:"rgba(168,122,255,.20)",hint:"Sleepy vibes — whisper voices help!"},
+    {name:"Sparkly",emoji:"✨",accent:"rgba(255,217,114,.22)",hint:"Sparkly day — try something creative!"}
+  ];
   function hashStr(str){ let h=2166136261>>>0; for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);} return h>>>0;}
   function getTodayMood(){
     const day=todayKey();
@@ -1280,8 +1301,8 @@
     $("moodHint").textContent=m.hint;
   }
 
-  function getCoins(){ return Math.max(0,parseInt(get(KEYS.coins,"0"),10)||0); }
-  function setCoins(v){ set(KEYS.coins,String(Math.max(0,v|0))); }
+  function getCoins(){ return Math.max(0,getInt(KEYS.coins,0)); }
+  function setCoins(v){ setInt(KEYS.coins,Math.max(0,v|0)); }
   function addCoins(n,reason="Coins!"){
     const next=getCoins()+(n|0);
     setCoins(next);
@@ -1382,6 +1403,7 @@
    gamesHubBackdrop,presentBackdrop,memoryBackdrop,snowBackdrop,runnerBackdrop,treeBackdrop].forEach(backdropClickClose);
 
   // Wheel
+  const gameBoost={life:0,slow:0};
   const WHEEL=[
     {label:"🪙 +10 coins",apply:()=>addCoins(10,"Wheel win!")},
     {label:"⭐ +1 sticker",apply:()=>addSticker("Wheel win!")},
@@ -1402,7 +1424,7 @@
   }
   let wheelRot=0;
 
-  // Advent (simplified so it always shows grid)
+  // Advent
   const ADVENT_SURPRISES=[
     "Jingles fact: Reindeer can see UV light! 🦌",
     "Bells says: do 20 seconds of silly dancing 💃",
@@ -1413,12 +1435,11 @@
     "Draw a candy cane ✍️",
     "Tell someone one nice thing 💛",
     "Make a paper snowflake ✂️❄️",
-    "Hide a tiny note for someone 📝",
+    "Hide a tiny note for someone 📝"
   ];
   function readAdvent(){ try{return JSON.parse(get(KEYS.advent,'{"open":[]}'))||{open:[]};}catch{return{open:[]};} }
   function writeAdvent(o){ set(KEYS.advent,JSON.stringify(o)); }
   function canOpenDoor(day){
-    // ✅ now just checks against today’s date (works in any month)
     const todayDate=new Date().getDate();
     return day<=todayDate;
   }
@@ -1468,9 +1489,26 @@
   }
 
   // Fun bits
-  const JOKES=[/* unchanged */"What do elves learn in school? The elf-abet! 🎓","Why did the ornament go to school? To get a little brighter! ✨","What do snowmen eat for breakfast? Ice Krispies! 🥣","Why is Santa so good at karate? He has a black belt! 🥋","What do you call a cat on the beach at Christmas? Sandy Claws! 🐾"];
-  const RIDDLES=[{q:"I’m full of holes but I can still hold water. What am I?",a:"A sponge 🧽"},{q:"What has to be broken before you can use it?",a:"An egg 🥚"},{q:"What has hands but can’t clap?",a:"A clock ⏰"},{q:"What goes up but never comes down?",a:"Your age 🎂"}];
-  const SURPRISES=["Jingles says: do a tiny happy dance! 💃","Bells says: find something green! 💚","Jingles says: tell someone “thank you”! 🙏","Bells says: make a funny face! 😜","Jingles says: tip-toe like an elf for 10 steps! 🧝"];
+  const JOKES=[
+    "What do elves learn in school? The elf-abet! 🎓",
+    "Why did the ornament go to school? To get a little brighter! ✨",
+    "What do snowmen eat for breakfast? Ice Krispies! 🥣",
+    "Why is Santa so good at karate? He has a black belt! 🥋",
+    "What do you call a cat on the beach at Christmas? Sandy Claws! 🐾"
+  ];
+  const RIDDLES=[
+    {q:"I’m full of holes but I can still hold water. What am I?",a:"A sponge 🧽"},
+    {q:"What has to be broken before you can use it?",a:"An egg 🥚"},
+    {q:"What has hands but can’t clap?",a:"A clock ⏰"},
+    {q:"What goes up but never comes down?",a:"Your age 🎂"}
+  ];
+  const SURPRISES=[
+    "Jingles says: do a tiny happy dance! 💃",
+    "Bells says: find something green! 💚",
+    "Jingles says: tell someone “thank you”! 🙏",
+    "Bells says: make a funny face! 😜",
+    "Jingles says: tip-toe like an elf for 10 steps! 🧝"
+  ];
 
   // Hidden admin: 5 second long press
   if(!get(KEYS.pin,"")) set(KEYS.pin,"1234");
@@ -1531,17 +1569,1180 @@
   adminBackdrop.addEventListener("touchstart",adminArmTimeout,{passive:true});
   adminBackdrop.addEventListener("keydown",adminArmTimeout);
 
-  // Jumping Elf game + other games: (unchanged from previous version, apart from using helpers)
-  /* -------------- JUMPING ELF, PRESENT CATCHER, MEMORY MATCH, SNOWBALL POP,
-     CANDY CANE RUNNER & TREE GAME CODE HERE (identical to previous message) --------------
-     For brevity in this message, I’ve kept this comment – in your file, you
-     already have that whole block; keep it as-is under this line.
-  */
+  // ---------- UI wiring ----------
+  $("openExtras").addEventListener("click",()=>openBackdrop(extrasBackdrop));
+  $("closeExtras").addEventListener("click",()=>closeBackdrop(extrasBackdrop));
 
-  // Due to message length, I’m not re-pasting the entire game block again,
-  // but you can safely keep your existing <script> game code from the
-  // previous version below this point — none of that needs to change
-  // for the three fixes you asked about.
+  $("openGamesHubFront").addEventListener("click",()=>openBackdrop(gamesHubBackdrop));
+  $("closeGamesHub").addEventListener("click",()=>closeBackdrop(gamesHubBackdrop));
+
+  $("openWheel").addEventListener("click",()=>{
+    renderWheelStatus();
+    openBackdrop(wheelBackdrop);
+  });
+  $("closeWheel").addEventListener("click",()=>closeBackdrop(wheelBackdrop));
+
+  $("openAdvent").addEventListener("click",()=>{
+    renderAdventGrid();
+    openBackdrop(adventBackdrop);
+  });
+  $("closeAdvent").addEventListener("click",()=>closeBackdrop(adventBackdrop));
+
+  $("addHeart").addEventListener("click",()=>{
+    const h=readHearts();
+    h.count=(h.count|0)+1;
+    writeHearts(h);
+    renderHearts();
+    beep(780,70,"triangle");
+  });
+  $("resetHearts").addEventListener("click",()=>{
+    const h=readHearts(); h.count=0; writeHearts(h); renderHearts();
+  });
+
+  $("challengeDone").addEventListener("click",()=>{
+    const c=readChallenge();
+    if(!c.text) return;
+    if(!c.done){
+      c.done=true;
+      writeChallenge(c);
+      renderChallenge();
+      addSticker("Daily challenge!");
+    }
+  });
+  $("challengeNew").addEventListener("click",()=>{
+    const idx=(Math.random()*CHALLENGES.length)|0;
+    const c={day:todayKey(),text:CHALLENGES[idx],done:false};
+    writeChallenge(c);
+    renderChallenge();
+  });
+
+  $("jokeBtn").addEventListener("click",()=>{
+    const j=JOKES[(Math.random()*JOKES.length)|0];
+    $("funOutput").textContent=j;
+    beep(700,60,"triangle");
+  });
+  $("riddleBtn").addEventListener("click",()=>{
+    const r=RIDDLES[(Math.random()*RIDDLES.length)|0];
+    $("funOutput").textContent=r.q+"  "+r.a;
+    beep(600,60,"square");
+  });
+  $("surpriseBtn").addEventListener("click",()=>{
+    const s=SURPRISES[(Math.random()*SURPRISES.length)|0];
+    $("funOutput").textContent=s;
+    beep(840,60,"sine");
+  });
+
+  $("handBtn").addEventListener("click",()=>{
+    const cur=get(KEYS.hand,"0")==="1";
+    set(KEYS.hand,cur?"0":"1");
+    applyPrefs();
+  });
+  $("stampBtn").addEventListener("click",()=>{
+    const cur=get(KEYS.stamp,"1")!=="0";
+    set(KEYS.stamp,cur?"0":"1");
+    applyPrefs();
+  });
+  $("twinkleBtn").addEventListener("click",()=>{
+    const cur=get(KEYS.twinkle,"1")!=="0";
+    set(KEYS.twinkle,cur?"0":"1");
+    applyPrefs();
+  });
+  $("snowBtn").addEventListener("click",()=>{
+    const cur=get(KEYS.snowOn,"1")!=="0";
+    set(KEYS.snowOn,cur?"0":"1");
+    applyPrefs();
+  });
+  $("bigTextBtn").addEventListener("click",()=>{
+    const cur=get(KEYS.bigText,"0")==="1";
+    set(KEYS.bigText,cur?"0":"1");
+    applyPrefs();
+  });
+  $("accessBtn").addEventListener("click",()=>{
+    const cur=get(KEYS.access,"0")==="1";
+    set(KEYS.access,cur?"0":"1");
+    applyPrefs();
+  });
+  $("perfBtn").addEventListener("click",()=>{
+    const cur=get(KEYS.perf,"0")==="1";
+    set(KEYS.perf,cur?"0":"1");
+    applyPrefs();
+  });
+
+  $("snowRange").addEventListener("input",(e)=>{
+    const v=parseInt(e.target.value,10)||0;
+    set(KEYS.snowPct,String(v));
+    applyPrefs();
+  });
+
+  $("soundToggle").addEventListener("click",()=>{
+    soundOn=!soundOn;
+    syncSoundButton();
+  });
+
+  $("spinBtn").addEventListener("click",()=>{
+    if(wheelDone()) return;
+    setWheelDone(true);
+    renderWheelStatus();
+    const segment=(Math.random()*WHEEL.length)|0;
+    const baseAngle=360-(segment*45+22.5);
+    const spins=4+Math.floor(Math.random()*3);
+    wheelRot += spins*360+baseAngle;
+    $("wheel").style.setProperty("--wheelRot",wheelRot+"deg");
+    $("wheelResult").textContent="Spinning...";
+    beep(800,90,"triangle");
+    setTimeout(()=>{
+      const prize=WHEEL[segment];
+      $("wheelResult").textContent=prize.label;
+      prize.apply();
+    },3400);
+  });
+
+  // PIN + Admin
+  $("pinClose").addEventListener("click",()=>closeBackdrop(pinBackdrop));
+  $("pinOk").addEventListener("click",()=>{
+    const input=($("pinInput").value||"").trim();
+    const pin=get(KEYS.pin,"1234");
+    if(!input){
+      $("pinErr").textContent="Enter PIN.";
+      return;
+    }
+    if(input===pin){
+      $("pinErr").textContent="";
+      closeBackdrop(pinBackdrop);
+      beep(760,90,"sine");
+      showAdmin();
+    }else{
+      $("pinErr").textContent="Incorrect PIN.";
+      beep(260,120,"square");
+    }
+  });
+
+  $("adminClose").addEventListener("click",()=>closeBackdrop(adminBackdrop));
+
+  $("saveToday").addEventListener("click",()=>{
+    const txt=$("adminMsg").value||"";
+    set(KEYS.msgDefault,txt);
+    renderMessage();
+    beep(760,80,"sine");
+  });
+
+  $("saveScheduled").addEventListener("click",()=>{
+    const date=($("schedDate").value||"").trim();
+    const txt=($("schedText").value||"").trim();
+    if(!date||!txt) return;
+    const m=readMap(KEYS.msgByDate);
+    m[date]=txt;
+    writeMap(KEYS.msgByDate,m);
+    beep(760,80,"sine");
+  });
+
+  $("clearScheduled").addEventListener("click",()=>{
+    const date=($("schedDate").value||"").trim();
+    if(!date) return;
+    const m=readMap(KEYS.msgByDate);
+    delete m[date];
+    writeMap(KEYS.msgByDate,m);
+    beep(400,80,"square");
+  });
+
+  $("setPin").addEventListener("click",()=>{
+    const np=($("newPin").value||"").trim();
+    if(!/^[0-9]{4,8}$/.test(np)){
+      alert("PIN must be 4–8 digits.");
+      return;
+    }
+    set(KEYS.pin,np);
+    $("newPin").value="";
+    alert("PIN updated.");
+  });
+
+  $("exportBtn").addEventListener("click",()=>{
+    const bundle={
+      msgDefault:get(KEYS.msgDefault,""),
+      msgByDate:readMap(KEYS.msgByDate),
+      pin:get(KEYS.pin,"1234")
+    };
+    const payload="ELFv1|"+btoa(JSON.stringify(bundle));
+    $("backupBox").value=payload;
+  });
+
+  $("importBtn").addEventListener("click",()=>{
+    const src=($("backupBox").value||"").trim();
+    if(!src) return;
+    try{
+      const parts=src.split("|");
+      const json=parts.length>1?parts[1]:parts[0];
+      const obj=JSON.parse(atob(json));
+      if(obj.msgDefault!==undefined) set(KEYS.msgDefault,obj.msgDefault);
+      if(obj.msgByDate) writeMap(KEYS.msgByDate,obj.msgByDate);
+      if(obj.pin) set(KEYS.pin,obj.pin);
+      renderMessage();
+      alert("Import complete.");
+    }catch(e){
+      alert("Import failed: "+e.message);
+    }
+  });
+
+  $("resetDayBtn").addEventListener("click",()=>{
+    if(!confirm("Reset today’s challenge, stickers, hearts and wheel?")) return;
+    set(KEYS.dayKey,"");
+    ensureDaily();
+    renderChallenge();
+    renderStickers();
+    renderHearts();
+    setWheelDone(false);
+    renderWheelStatus();
+  });
+
+  $("factoryBtn").addEventListener("click",()=>{
+    if(!confirm("Factory reset everything (messages, coins, scores, prefs)?")) return;
+    try{
+      Object.values(KEYS).forEach(k=>localStorage.removeItem(k));
+    }catch{}
+    location.reload();
+  });
+
+  // ---------- Jumping Elf Game ----------
+  const gameCanvas=$("game");
+  let gameCtx=null;
+  let gameRunning=false;
+  let gameFrameId=0;
+  let elfY=0, elfVY=0;
+  let floorY=0;
+  let obstacles=[];
+  let gameSpeed=260;
+  let gameScore=0;
+  let gameLevel=1;
+  let gameCoinsRun=0;
+  let gameLives=3;
+  let lastTime=0;
+  const GRAVITY=1400;
+  const JUMP_VY=-520;
+
+  function updateGameHUD(){
+    $("score").textContent=String(gameScore|0);
+    $("level").textContent=String(gameLevel|0);
+    $("coins").textContent=String(gameCoinsRun|0);
+    $("dailyBest").textContent=String(getDailyBestAll());
+    $("lives").textContent="❤".repeat(gameLives);
+  }
+
+  async function setupGameCanvas(){
+    gameCtx=await fitCanvasSafe(gameCanvas);
+  }
+
+  function resetJumpGameState(){
+    gameScore=0;
+    gameLevel=1;
+    gameCoinsRun=0;
+    gameLives=3;
+    obstacles=[];
+    lastTime=0;
+    updateGameHUD();
+    $("status").textContent="Tap Start, then tap the game (or Jump) to jump.";
+  }
+
+  function useGameBoosts(){
+    if(gameBoost.life){
+      gameLives+=gameBoost.life;
+      gameBoost.life=0;
+    }
+    if(gameBoost.slow){
+      gameSpeed*=0.8;
+      gameBoost.slow=0;
+    }
+  }
+
+  async function startJumpGame(){
+    await setupGameCanvas();
+    const rect=gameCanvas.getBoundingClientRect();
+    floorY=rect.height-40;
+    elfY=floorY;
+    elfVY=0;
+    gameSpeed=260+gameLevel*20;
+    useGameBoosts();
+    gameRunning=true;
+    lastTime=performance.now();
+    $("status").textContent="Go! Tap to jump over presents.";
+    $("startBtn").disabled=true;
+    $("jumpBtn").disabled=false;
+    gameFrameId=requestAnimationFrame(loopJumpGame);
+  }
+
+  function spawnObstacle(){
+    const w=gameCanvas.getBoundingClientRect().width;
+    obstacles.push({x:w+40,w:40,y:floorY-26,hit:false});
+  }
+
+  function handleHit(){
+    gameLives--;
+    beep(240,160,"square");
+    if(gameLives<=0){
+      endJumpGame(true);
+    }else{
+      $("status").textContent="Ouch! You still have "+gameLives+" lives.";
+      obstacles=[];
+    }
+  }
+
+  function endJumpGame(gameOver){
+    gameRunning=false;
+    cancelAnimationFrame(gameFrameId);
+    gameFrameId=0;
+    $("startBtn").disabled=false;
+    $("jumpBtn").disabled=true;
+
+    const bestBefore=getDailyBestAll();
+    if(gameScore>bestBefore){
+      setDailyBestAll(gameScore);
+      $("status").textContent="New daily best: "+gameScore+"!";
+      addCoins(3,"New Jumping Elf best!");
+    }else if(gameOver){
+      $("status").textContent="Finished with "+gameScore+" points.";
+    }
+
+    if(gameCoinsRun>0){
+      addCoins(gameCoinsRun,"Jumping Elf run");
+      gameCoinsRun=0;
+    }
+    updateGameHUD();
+  }
+
+  function stopJumpGame(){
+    if(gameRunning) endJumpGame(false);
+  }
+
+  function loopJumpGame(t){
+    if(!gameRunning) return;
+    const dt=(t-lastTime)/1000;
+    lastTime=t;
+    const rect=gameCanvas.getBoundingClientRect();
+    const w=rect.width;
+    const h=rect.height;
+
+    elfVY+=GRAVITY*dt;
+    elfY+=elfVY*dt;
+    if(elfY>floorY){ elfY=floorY; elfVY=0; }
+
+    if(obstacles.length===0 || w-obstacles[obstacles.length-1].x>220){
+      spawnObstacle();
+    }
+
+    for(const ob of obstacles){
+      ob.x-=gameSpeed*dt;
+    }
+    obstacles=obstacles.filter(ob=>ob.x+ob.w>-40);
+
+    for(const ob of obstacles){
+      if(!ob.hit && ob.x+ob.w < w*0.2){
+        ob.hit=true;
+        gameScore+=10;
+        if(gameScore%100===0){
+          gameLevel++;
+          gameSpeed+=40;
+        }
+        if(gameScore%150===0){
+          gameCoinsRun+=1;
+        }
+      }
+      const elfX=w*0.18;
+      const elfSize=32;
+      if(elfY+elfSize>ob.y && elfY<ob.y+26 && elfX+elfSize>ob.x && elfX<ob.x+ob.w){
+        handleHit();
+        break;
+      }
+    }
+
+    gameCtx.clearRect(0,0,w,h);
+    // ground
+    gameCtx.fillStyle="rgba(0,0,0,0.25)";
+    gameCtx.fillRect(0,floorY+4,w,6);
+    // elf
+    gameCtx.fillStyle="#ffd972";
+    gameCtx.fillRect(w*0.18,elfY-28,26,28);
+    gameCtx.fillStyle="#22b36d";
+    gameCtx.fillRect(w*0.18,elfY-44,26,16);
+    // presents
+    gameCtx.fillStyle="#ff6363";
+    for(const ob of obstacles){
+      gameCtx.fillRect(ob.x,ob.y,ob.w,26);
+    }
+
+    updateGameHUD();
+    if(gameRunning) gameFrameId=requestAnimationFrame(loopJumpGame);
+  }
+
+  function doJump(){
+    if(!gameRunning) return;
+    if(elfY>=floorY-1){
+      elfVY=JUMP_VY;
+      beep(780,70,"triangle");
+    }
+  }
+
+  $("startBtn").addEventListener("click",()=>{
+    resetJumpGameState();
+    startJumpGame();
+  });
+  $("jumpBtn").addEventListener("click",()=>doJump());
+  gameCanvas.addEventListener("pointerdown",(e)=>{
+    e.preventDefault();
+    doJump();
+  });
+
+  $("zoomBtn").addEventListener("click",()=>{
+    document.body.classList.toggle("zoomed");
+    $("zoomBtn").textContent=document.body.classList.contains("zoomed")?"⛶ Normal Size":"⛶ Big Mode";
+  });
+
+  $("closeGame").addEventListener("click",()=>{
+    closeBackdrop(gameBackdrop);
+    stopJumpGame();
+  });
+  gameBackdrop.addEventListener("click",(e)=>{
+    if(e.target===gameBackdrop){
+      closeBackdrop(gameBackdrop);
+      stopJumpGame();
+    }
+  });
+
+  function openJumpingElf(){
+    openBackdrop(gameBackdrop);
+    resetJumpGameState();
+  }
+  $("openJumpingElfFromHub").addEventListener("click",()=>{
+    closeBackdrop(gamesHubBackdrop);
+    openJumpingElf();
+  });
+
+  // ---------- Game 1: Present Catcher ----------
+  const pcCanvas=$("pcCanvas");
+  let pcCtx=null;
+  let pcRunning=false;
+  let pcAnim=0;
+  let pcPlayerX=0;
+  let pcScore=0, pcMiss=0, pcLevel=1;
+  let pcBest=getInt(KEYS.pcBest,0);
+  let pcPresents=[];
+  let pcLastTime=0;
+
+  function pcUpdateHUD(){
+    $("pcScore").textContent=String(pcScore);
+    $("pcMiss").textContent=String(pcMiss);
+    $("pcLevel").textContent=String(pcLevel);
+    $("pcBest").textContent=String(pcBest);
+  }
+
+  async function pcInit(){
+    pcCtx=await fitCanvasSafe(pcCanvas);
+    const w=pcCanvas.getBoundingClientRect().width;
+    pcPlayerX=w/2;
+  }
+
+  function pcReset(){
+    pcScore=0; pcMiss=0; pcLevel=1;
+    pcPresents=[];
+    pcLastTime=0;
+    pcUpdateHUD();
+    $("pcStatus").textContent="Drag left/right to move. Catch 🎁, don’t miss 3!";
+  }
+
+  function pcSpawn(){
+    const w=pcCanvas.getBoundingClientRect().width;
+    pcPresents.push({
+      x:20+Math.random()*(w-40),
+      y:-20,
+      vy:120+pcLevel*40,
+      good:Math.random()<0.85
+    });
+  }
+
+  function pcEnd(){
+    pcRunning=false;
+    cancelAnimationFrame(pcAnim);
+    if(pcScore>pcBest){
+      pcBest=pcScore;
+      setInt(KEYS.pcBest,pcBest);
+      $("pcStatus").textContent="New best: "+pcScore+"!";
+      addCoins(2,"Present Catcher best");
+    }else{
+      $("pcStatus").textContent="Game over — score "+pcScore+".";
+    }
+  }
+
+  function pcLoop(t){
+    if(!pcRunning) return;
+    const dt=(t-pcLastTime)/1000;
+    pcLastTime=t;
+    const rect=pcCanvas.getBoundingClientRect();
+    const w=rect.width;
+    const h=rect.height;
+    const basketY=h-40;
+    const basketW=70;
+
+    if(pcPresents.length===0 || t-pcLastSpawn>900){
+      pcSpawn();
+      pcLastSpawn=t;
+    }
+
+    pcPresents.forEach(p=>p.y+=p.vy*dt);
+    const newArr=[];
+    for(const p of pcPresents){
+      if(p.y>h-50){
+        if(Math.abs(p.x-pcPlayerX)<basketW/2 && p.good){
+          pcScore+=10;
+          if(pcScore%80===0){ pcLevel++; }
+          beep(800,70,"triangle");
+        }else if(p.good){
+          pcMiss++;
+          beep(260,120,"square");
+          if(pcMiss>=3){
+            pcUpdateHUD();
+            pcEnd();
+            pcDraw(); // final
+            return;
+          }
+        }
+      }else{
+        newArr.push(p);
+      }
+    }
+    pcPresents=newArr;
+
+    pcDraw();
+    pcUpdateHUD();
+    pcAnim=requestAnimationFrame(pcLoop);
+  }
+
+  function pcDraw(){
+    const rect=pcCanvas.getBoundingClientRect();
+    const w=rect.width;
+    const h=rect.height;
+    pcCtx.clearRect(0,0,w,h);
+    pcCtx.fillStyle="rgba(0,0,0,0.3)";
+    pcCtx.fillRect(0,h-30,w,30);
+    // basket
+    pcCtx.fillStyle="#ffd972";
+    pcCtx.fillRect(pcPlayerX-35,h-45,70,22);
+    // presents
+    pcPresents.forEach(p=>{
+      pcCtx.fillStyle=p.good?"#ff6363":"#22b36d";
+      pcCtx.fillRect(p.x-14,p.y-14,28,28);
+    });
+  }
+
+  let pcLastSpawn=0;
+
+  $("pcStart").addEventListener("click",async ()=>{
+    await pcInit();
+    pcReset();
+    pcRunning=true;
+    pcLastTime=performance.now();
+    pcLastSpawn=pcLastTime;
+    $("pcStatus").textContent="Catch the presents!";
+    pcAnim=requestAnimationFrame(pcLoop);
+  });
+
+  pcCanvas.addEventListener("pointerdown",pcMove);
+  pcCanvas.addEventListener("pointermove",pcMove);
+
+  function pcMove(e){
+    if(!pcCtx) return;
+    const rect=pcCanvas.getBoundingClientRect();
+    pcPlayerX=e.clientX-rect.left;
+    pcDraw();
+  }
+
+  $("openGame1").addEventListener("click",()=>{
+    openBackdrop(presentBackdrop);
+    pcReset();
+  });
+  $("closePresent").addEventListener("click",()=>{
+    closeBackdrop(presentBackdrop);
+    pcRunning=false;
+    cancelAnimationFrame(pcAnim);
+  });
+
+  // ---------- Game 2: Memory Match ----------
+  const mmGridEl=$("mmGrid");
+  const mmIcons=["🎄","🎁","🦌","❄️","⭐","🎅","🧸","🍬","🔔","⛄"];
+  let mmCards=[];
+  let mmFirst=null, mmSecond=null;
+  let mmMoves=0, mmMatches=0, mmTotalPairs=8;
+  let mmTimer=null, mmTimeVal=0;
+  let mmHard=false;
+
+  function mmUpdateHUD(){
+    $("mmMoves").textContent=String(mmMoves);
+    $("mmMatches").textContent=String(mmMatches);
+    $("mmTotal").textContent=String(mmTotalPairs);
+    $("mmTime").textContent=String(mmTimeVal);
+    $("mmBest").textContent=get(KEYS.mmBest,"--");
+  }
+
+  function mmStopTimer(){
+    if(mmTimer){ clearInterval(mmTimer); mmTimer=null; }
+  }
+  function mmStartTimer(){
+    mmStopTimer();
+    mmTimeVal=0;
+    $("mmTime").textContent="0";
+    mmTimer=setInterval(()=>{mmTimeVal++; $("mmTime").textContent=String(mmTimeVal);},1000);
+  }
+
+  function mmNewGame(){
+    const pairs=mmHard?10:8;
+    mmTotalPairs=pairs;
+    mmMoves=0; mmMatches=0;
+    mmFirst=mmSecond=null;
+    mmStopTimer();
+    mmTimeVal=0;
+    const arr=[];
+    for(let i=0;i<pairs;i++){
+      const icon=mmIcons[i%mmIcons.length];
+      arr.push({id:i*2,icon},{id:i*2+1,icon});
+    }
+    arr.sort(()=>Math.random()-0.5);
+    mmCards=arr;
+    mmGridEl.innerHTML="";
+    arr.forEach((card,idx)=>{
+      const div=document.createElement("div");
+      div.className="mmCard";
+      div.dataset.idx=idx;
+      const back=document.createElement("div");
+      back.className="mmBack";
+      back.textContent="🎅";
+      const face=document.createElement("div");
+      face.className="mmFace";
+      face.textContent=card.icon;
+      div.appendChild(back);
+      div.appendChild(face);
+      div.addEventListener("click",()=>mmClick(idx,div));
+      mmGridEl.appendChild(div);
+    });
+    $("mmStatus").textContent="Find all the pairs!";
+    mmUpdateHUD();
+  }
+
+  function mmClick(idx,div){
+    const card=mmCards[idx];
+    if(!card || card.matched || div.classList.contains("revealed")) return;
+    if(mmMoves===0 && !mmTimer) mmStartTimer();
+    if(mmFirst && mmSecond) return;
+
+    div.classList.add("revealed");
+    if(!mmFirst){
+      mmFirst={idx,card,el:div};
+    }else if(!mmSecond){
+      mmSecond={idx,card,el:div};
+      mmMoves++;
+      mmUpdateHUD();
+      if(mmFirst.card.icon===mmSecond.card.icon){
+        mmFirst.card.matched=true;
+        mmSecond.card.matched=true;
+        mmFirst.el.classList.add("matched");
+        mmSecond.el.classList.add("matched");
+        mmMatches++;
+        mmFirst=mmSecond=null;
+        mmUpdateHUD();
+        beep(840,80,"triangle");
+        if(mmMatches===mmTotalPairs){
+          mmStopTimer();
+          const bestStr=get(KEYS.mmBest,"");
+          const current=mmTimeVal;
+          let better=false;
+          if(!bestStr || bestStr==="--") better=true;
+          else{
+            const prev=parseInt(bestStr,10);
+            if(Number.isFinite(prev) && current<prev) better=true;
+          }
+          if(better){
+            set(KEYS.mmBest,String(current));
+            $("mmBest").textContent=String(current);
+            addCoins(2,"Memory Match best");
+          }
+          $("mmStatus").textContent="All pairs found!";
+        }
+      }else{
+        setTimeout(()=>{
+          mmFirst.el.classList.remove("revealed");
+          mmSecond.el.classList.remove("revealed");
+          mmFirst=mmSecond=null;
+        },550);
+      }
+    }
+  }
+
+  $("mmNew").addEventListener("click",mmNewGame);
+  $("mmHard").addEventListener("click",()=>{
+    mmHard=!mmHard;
+    $("mmHard").textContent="Difficulty: "+(mmHard?"Hard":"Normal");
+    mmNewGame();
+  });
+
+  $("openGame2").addEventListener("click",()=>{
+    openBackdrop(memoryBackdrop);
+    mmNewGame();
+  });
+  $("closeMemory").addEventListener("click",()=>{
+    closeBackdrop(memoryBackdrop);
+    mmStopTimer();
+  });
+
+  // ---------- Game 3: Snowball Pop ----------
+  const spCanvas=$("spCanvas");
+  let spCtx=null;
+  let spRunning=false;
+  let spAnim=0;
+  let spBalls=[];
+  let spScore=0, spMiss=0, spLevel=1;
+  let spBest=getInt(KEYS.spBest,0);
+  let spLastTime=0, spLastSpawnTime=0;
+
+  function spUpdateHUD(){
+    $("spScore").textContent=String(spScore);
+    $("spMiss").textContent=String(spMiss);
+    $("spLevel").textContent=String(spLevel);
+    $("spBest").textContent=String(spBest);
+  }
+
+  async function spInit(){
+    spCtx=await fitCanvasSafe(spCanvas);
+  }
+
+  function spReset(){
+    spScore=0; spMiss=0; spLevel=1;
+    spBalls=[];
+    spLastTime=0; spLastSpawnTime=0;
+    spUpdateHUD();
+    $("spStatus").textContent="Tap snowballs to pop them. Avoid the green “Grinch” one!";
+  }
+
+  function spSpawn(){
+    const rect=spCanvas.getBoundingClientRect();
+    const w=rect.width;
+    spBalls.push({
+      x:20+Math.random()*(w-40),
+      y:-20,
+      vy:80+spLevel*40,
+      bad:Math.random()<0.12
+    });
+  }
+
+  function spEnd(){
+    spRunning=false;
+    cancelAnimationFrame(spAnim);
+    if(spScore>spBest){
+      spBest=spScore;
+      setInt(KEYS.spBest,spBest);
+      $("spStatus").textContent="New best: "+spScore+"!";
+      addCoins(2,"Snowball Pop best");
+    }else{
+      $("spStatus").textContent="Game over — score "+spScore+".";
+    }
+  }
+
+  function spLoop(t){
+    if(!spRunning) return;
+    const dt=(t-spLastTime)/1000;
+    spLastTime=t;
+    const rect=spCanvas.getBoundingClientRect();
+    const w=rect.width;
+    const h=rect.height;
+
+    if(!spLastSpawnTime || t-spLastSpawnTime>800){
+      spSpawn();
+      spLastSpawnTime=t;
+    }
+
+    spBalls.forEach(b=>b.y+=b.vy*dt);
+    const remaining=[];
+    for(const b of spBalls){
+      if(b.y>h+30){
+        if(!b.bad){
+          spMiss++;
+          beep(260,120,"square");
+          if(spMiss>=5){
+            spUpdateHUD();
+            spEnd();
+            spDraw();
+            return;
+          }
+        }
+      }else{
+        remaining.push(b);
+      }
+    }
+    spBalls=remaining;
+
+    spDraw();
+    spUpdateHUD();
+    spAnim=requestAnimationFrame(spLoop);
+  }
+
+  function spDraw(){
+    const rect=spCanvas.getBoundingClientRect();
+    const w=rect.width, h=rect.height;
+    spCtx.clearRect(0,0,w,h);
+    spBalls.forEach(b=>{
+      spCtx.beginPath();
+      spCtx.arc(b.x,b.y,18,0,Math.PI*2);
+      spCtx.fillStyle=b.bad?"#3bbf4a":"#ffffff";
+      spCtx.fill();
+      spCtx.closePath();
+    });
+  }
+
+  spCanvas.addEventListener("pointerdown",e=>{
+    if(!spCtx) return;
+    const rect=spCanvas.getBoundingClientRect();
+    const x=e.clientX-rect.left;
+    const y=e.clientY-rect.top;
+    let hitIndex=-1;
+    spBalls.forEach((b,idx)=>{
+      const dx=x-b.x, dy=y-b.y;
+      if(dx*dx+dy*dy<=18*18) hitIndex=idx;
+    });
+    if(hitIndex>=0){
+      const b=spBalls[hitIndex];
+      if(b.bad){
+        // hit bad ball -> big penalty
+        spMiss+=2;
+        beep(200,200,"square");
+      }else{
+        spScore+=10;
+        if(spScore%80===0) spLevel++;
+        beep(880,80,"triangle");
+      }
+      spBalls.splice(hitIndex,1);
+      spUpdateHUD();
+      if(spMiss>=5){
+        spEnd();
+        spDraw();
+      }
+    }
+  });
+
+  $("spStart").addEventListener("click",async ()=>{
+    await spInit();
+    spReset();
+    spRunning=true;
+    spLastTime=performance.now();
+    spLastSpawnTime=spLastTime;
+    $("spStatus").textContent="Pop the snowballs!";
+    spAnim=requestAnimationFrame(spLoop);
+  });
+
+  $("openGame3").addEventListener("click",()=>{
+    openBackdrop(snowBackdrop);
+    spReset();
+  });
+  $("closeSnow").addEventListener("click",()=>{
+    closeBackdrop(snowBackdrop);
+    spRunning=false;
+    cancelAnimationFrame(spAnim);
+  });
+
+  // ---------- Game 4: Candy Cane Runner ----------
+  const crCanvas=$("crCanvas");
+  let crCtx=null;
+  let crRunning=false;
+  let crAnim=0;
+  let crLane=1; // 0,1,2
+  let crObstacles=[];
+  let crScore=0, crLevel=1;
+  let crBest=getInt(KEYS.crBest,0);
+  let crLastTime=0, crLastSpawn=0;
+
+  function crUpdateHUD(){
+    $("crScore").textContent=String(crScore);
+    $("crLevel").textContent=String(crLevel);
+    $("crBest").textContent=String(crBest);
+  }
+
+  async function crInit(){
+    crCtx=await fitCanvasSafe(crCanvas);
+  }
+
+  function crReset(){
+    crLane=1;
+    crObstacles=[];
+    crScore=0;
+    crLevel=1;
+    crLastTime=0;
+    crLastSpawn=0;
+    crUpdateHUD();
+    $("crStatus").textContent="Tap Switch (or tap the game) to change lanes and avoid obstacles.";
+  }
+
+  function crSpawn(){
+    const rect=crCanvas.getBoundingClientRect();
+    const laneWidth=rect.width/3;
+    const lane=Math.floor(Math.random()*3);
+    crObstacles.push({
+      lane,
+      y:-40,
+      vy:140+crLevel*30
+    });
+  }
+
+  function crEnd(){
+    crRunning=false;
+    cancelAnimationFrame(crAnim);
+    if(crScore>crBest){
+      crBest=crScore;
+      setInt(KEYS.crBest,crBest);
+      $("crStatus").textContent="New best: "+crScore+"!";
+      addCoins(2,"Candy Cane Runner best");
+    }else{
+      $("crStatus").textContent="Game over — score "+crScore+".";
+    }
+    $("crSwitch").disabled=true;
+  }
+
+  function crLoop(t){
+    if(!crRunning) return;
+    const dt=(t-crLastTime)/1000;
+    crLastTime=t;
+    const rect=crCanvas.getBoundingClientRect();
+    const w=rect.width, h=rect.height;
+
+    if(!crLastSpawn || t-crLastSpawn>900){
+      crSpawn();
+      crLastSpawn=t;
+    }
+
+    crObstacles.forEach(o=>o.y+=o.vy*dt);
+    const remain=[];
+    for(const o of crObstacles){
+      if(o.y>h+40){
+        crScore+=10;
+        if(crScore%80===0) crLevel++;
+      }else{
+        remain.push(o);
+      }
+    }
+    crObstacles=remain;
+
+    // collision
+    const runnerY=h-70;
+    const laneWidth=w/3;
+    for(const o of crObstacles){
+      const ox=o.lane*laneWidth+laneWidth/2;
+      const oy=o.y;
+      const rx=crLane*laneWidth+laneWidth/2;
+      if(Math.abs(oy-runnerY)<40 && Math.abs(ox-rx)<laneWidth*0.35){
+        beep(260,160,"square");
+        crEnd();
+        crDraw();
+        return;
+      }
+    }
+
+    crDraw();
+    crUpdateHUD();
+    crAnim=requestAnimationFrame(crLoop);
+  }
+
+  function crDraw(){
+    const rect=crCanvas.getBoundingClientRect();
+    const w=rect.width, h=rect.height;
+    crCtx.clearRect(0,0,w,h);
+    const laneWidth=w/3;
+    crCtx.strokeStyle="rgba(255,255,255,0.2)";
+    crCtx.lineWidth=2;
+    crCtx.setLineDash([10,10]);
+    crCtx.beginPath();
+    crCtx.moveTo(laneWidth,0); crCtx.lineTo(laneWidth,h);
+    crCtx.moveTo(laneWidth*2,0); crCtx.lineTo(laneWidth*2,h);
+    crCtx.stroke();
+    crCtx.setLineDash([]);
+
+    // runner
+    const rx=crLane*laneWidth+laneWidth/2;
+    const ry=h-70;
+    crCtx.fillStyle="#ffd972";
+    crCtx.fillRect(rx-18,ry-26,36,26);
+    crCtx.fillStyle="#ff6363";
+    crCtx.fillRect(rx-18,ry-40,36,14);
+
+    // obstacles
+    crCtx.fillStyle="#ffffff";
+    crObstacles.forEach(o=>{
+      const x=o.lane*laneWidth+laneWidth/2;
+      crCtx.beginPath();
+      crCtx.arc(x,o.y,18,0,Math.PI*2);
+      crCtx.fill();
+    });
+  }
+
+  function crSwitchLane(){
+    if(!crRunning) return;
+    crLane=(crLane+1)%3;
+    beep(780,60,"triangle");
+  }
+
+  $("crStart").addEventListener("click",async ()=>{
+    await crInit();
+    crReset();
+    crRunning=true;
+    crLastTime=performance.now();
+    crLastSpawn=crLastTime;
+    $("crSwitch").disabled=false;
+    $("crStatus").textContent="Run!";
+    crAnim=requestAnimationFrame(crLoop);
+  });
+
+  $("crSwitch").addEventListener("click",crSwitchLane);
+  crCanvas.addEventListener("pointerdown",(e)=>{
+    e.preventDefault();
+    crSwitchLane();
+  });
+
+  $("openGame4").addEventListener("click",()=>{
+    openBackdrop(runnerBackdrop);
+    crReset();
+  });
+  $("closeRunner").addEventListener("click",()=>{
+    closeBackdrop(runnerBackdrop);
+    crRunning=false;
+    cancelAnimationFrame(crAnim);
+    $("crSwitch").disabled=true;
+  });
+
+  // ---------- Game 5: Decorate the Tree ----------
+  const dtTree=$("dtTree");
+  const dtTray=$("dtOrnaments");
+  let dtPlacedCount=0;
+  let dtBest=getInt(KEYS.dtBest,0);
+  let dtTimeLeft=30;
+  let dtTimer=null;
+  let dtActive=false;
+
+  function dtUpdateHUD(){
+    $("dtPlaced").textContent=String(dtPlacedCount);
+    $("dtTime").textContent=String(dtTimeLeft);
+    $("dtBest").textContent=String(dtBest);
+  }
+
+  function dtStopTimer(){
+    if(dtTimer){ clearInterval(dtTimer); dtTimer=null; }
+  }
+
+  function dtStartTimer(){
+    dtStopTimer();
+    dtTimeLeft=30;
+    dtTimer=setInterval(()=>{
+      dtTimeLeft--;
+      $("dtTime").textContent=String(dtTimeLeft);
+      if(dtTimeLeft<=0){
+        dtEnd();
+      }
+    },1000);
+  }
+
+  function dtReset(){
+    dtActive=false;
+    dtStopTimer();
+    dtPlacedCount=0;
+    dtTree.querySelectorAll(".dtPlaced").forEach(e=>e.remove());
+    dtTray.innerHTML="";
+    const icons=["🎄","🎁","⭐","❄️","🦌","🍬","🔔","⛄","🧸","🎅","💗","✨"];
+    icons.forEach(ic=>{
+      const d=document.createElement("div");
+      d.className="dtOrn";
+      d.textContent=ic;
+      d.addEventListener("click",()=>dtPlace(ic));
+      dtTray.appendChild(d);
+    });
+    $("dtStatus").textContent="Tap an ornament to place it on the tree before time runs out!";
+    dtUpdateHUD();
+  }
+
+  function dtPlace(icon){
+    if(!dtActive) return;
+    const rect=dtTree.getBoundingClientRect();
+    // approximate triangle area
+    const minY=rect.height*0.2;
+    const maxY=rect.height*0.85;
+    let tries=20;
+    while(tries--){
+      const y=minY+Math.random()*(maxY-minY);
+      const spread=(1-(y-minY)/(maxY-minY))*0.45*rect.width;
+      const x=rect.width/2+(Math.random()*2-1)*spread;
+      const span=((y-minY)/(maxY-minY))*rect.height;
+      if(x>rect.width/2-span && x<rect.width/2+span){
+        const el=document.createElement("div");
+        el.className="dtPlaced";
+        el.textContent=icon;
+        el.style.left=x+"px";
+        el.style.top=y+"px";
+        dtTree.appendChild(el);
+        dtPlacedCount++;
+        dtUpdateHUD();
+        beep(840,70,"triangle");
+        break;
+      }
+    }
+  }
+
+  function dtEnd(){
+    dtActive=false;
+    dtStopTimer();
+    if(dtPlacedCount>dtBest){
+      dtBest=dtPlacedCount;
+      setInt(KEYS.dtBest,dtBest);
+      $("dtStatus").textContent="Time! New best: "+dtPlacedCount+" ornaments.";
+      addCoins(2,"Decorate the Tree best");
+    }else{
+      $("dtStatus").textContent="Time! You placed "+dtPlacedCount+" ornaments.";
+    }
+  }
+
+  $("dtStart").addEventListener("click",()=>{
+    dtActive=true;
+    dtStartTimer();
+    $("dtStatus").textContent="Tap ornaments to place them!";
+  });
+  $("dtReset").addEventListener("click",dtReset);
+
+  $("openGame5").addEventListener("click",()=>{
+    openBackdrop(treeBackdrop);
+    dtReset();
+  });
+  $("closeTree").addEventListener("click",()=>{
+    closeBackdrop(treeBackdrop);
+    dtActive=false;
+    dtStopTimer();
+  });
+
+  // ---------- Games Hub openers ----------
+  $("openGame1").addEventListener("click",()=>openBackdrop(presentBackdrop));
+  $("openGame2").addEventListener("click",()=>openBackdrop(memoryBackdrop));
+  $("openGame3").addEventListener("click",()=>openBackdrop(snowBackdrop));
+  $("openGame4").addEventListener("click",()=>openBackdrop(runnerBackdrop));
+  $("openGame5").addEventListener("click",()=>openBackdrop(treeBackdrop));
+
+  // ---------- Initial setup ----------
+  function initDate(){
+    const now=new Date();
+    const dayNames=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
+    $("dateLabel").textContent=`${dayNames[now.getDay()]}, ${now.getDate()} ${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+  }
+
+  ensureDaily();
+  applyPrefs();
+  renderMessage();
+  renderChallenge();
+  renderStickers();
+  renderHearts();
+  renderMood();
+  refreshMini();
+  renderWheelStatus();
+  initDate();
+  tickCountdown();
+  setInterval(tickCountdown,1000);
 
 })();
 </script>
